@@ -1,34 +1,81 @@
-#include "Client.h"
-#include "Seller.h"
-#include "stdafx.h"
-#include <Windows.h>
+#include "DataSource.h"
+#include"stdafx.h"
+#include "GeneratorTable.h"
 using namespace std;
 
 
 
-int main() {
-	unsigned int amount;
-	ofstream Output;
-	bool random=false;
-	cout << "Enter the number of the generated records" << endl;
-	cin >> amount;
-	Output.open("D:\\Finish.csv");
+int main(int argc, char* argv[]) {
 	srand(time(0));
-	for (int i = 0; i < amount; i++)
+	// Output - переменная для работы с конечным файлом
+	ofstream Output;
+	/*
+	* Count - количество генерируемых записей	
+	* AmountDate - количество словарей для составления записей
+	*/
+	int count, AmountDate;
+	/*
+	* NameCollum - используется в вопросе, называть ли столбец в конечном файле именем словаря
+	*/
+	char NameCollum;
+	/*
+	* Directory - путь до словаря(или словарей, если все находятся в одном каталоге)
+	* NameOut - имя конечного файла
+	* Name - название словаря
+	* GenerationLine - запись, сохраняющаяся в конечный файл
+	* NameCollums - имя столбца
+	*/
+	string Directory, NameOut, Name, GenerationLine, NameCollums;
+	// DateSource - массив строк, каждая из которых привязана к конкретному словарю
+	DataSource *Source;
+	if (argc != 1) 
 	{
-		if (random)
-		{
-			Client Clt;
-			Output << "Покупатель ;" + Clt.PrintAllInfo() << endl;
-			random = false;
-		}
-		else
-		{
-			Seller Slr;
-			Output << "Продавец ;" + Slr.PrintAllInfo() << endl;
-			random = true;
-		}
+		//запуск из командной строки
+			NameOut = argv[1];
+			Output.open(NameOut);
+			Output << "Index;";
+			AmountDate = atoi(argv[2]);
+			Source = new DataSource[AmountDate];
+			Directory = argv[3];
+			for (int i = 0; i < AmountDate; i++)
+			{
+				Source[i].DataSource::DataSource(argv[i+4], Directory);
+				Output << Source[i].date.ReturnNameWithoutExterrior() + ';';
+			}
+			Output << endl;
+			count = atoi(argv[argc-1]);
+		
 	}
-	Output.close();
-	
+	else
+	{
+		//запуск из консоли
+		cout << "Введите полный путь до конечного файла с именем и расширением CSV." << endl;
+		cin >> NameOut;
+		Output.open(NameOut);
+		Output << "Index;";
+		cout << "Введите количество словарей." << endl;
+		cin >> AmountDate;
+		Source = new DataSource[AmountDate];
+		cout << "Внимание! Вводите словари в том порядке, в котором хотите получить данные в конечном файле." << endl;
+		cout << "Введите путь до каталога словарей" << endl;
+		cin >> Directory;
+		//Заполнение массива словарей, когда выбран вариант, что словари находятся в одном каталоге
+		for (int i = 0; i < AmountDate; i++)
+		{
+			cout << "Введите имя словаря вместе с расширением" << endl;
+			cin >> Name;
+			Source[i].DataSource::DataSource(Name, Directory);
+			Output << Source[i].date.ReturnNameWithoutExterrior() + ';';
+		}
+
+		Output << endl;
+		cout << "Введите количество генерируемых данных." << endl;
+		cin >> count;
+		Output.close();
+	}
+		//генерация необходимого количества записей
+		GeneratorTable Gnr;
+		Gnr.Generate(count, Source, AmountDate, NameOut);
+		
+		delete[] Source;
 }
